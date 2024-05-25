@@ -20,15 +20,15 @@ jobs:
       id: git_commit
       run: echo "::set-output name=sha::$(git rev-parse --short HEAD)"
 
-    - name: Build and tag Docker image
+    - name: Build Docker image from Dockerfile
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }} .
-        docker tag ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }} ${{ secrets.DOCKER_USERNAME }}/myhello:latest
+        docker build -t myhello:${{ steps.git_commit.outputs.sha }} .
+        docker tag myhello:${{ steps.git_commit.outputs.sha }} ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }}
 
     - name: Run Trivy vulnerability scanner on Dockerfile
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: Dockerfile
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }}
         format: 'table'
         exit-code: '1'
         ignore-unfixed: true
