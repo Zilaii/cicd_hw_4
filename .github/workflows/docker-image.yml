@@ -16,10 +16,20 @@ jobs:
     - name: Login to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Build and push Docker image
+    - name: Get Git Commit SHA
+      id: git_commit
+      run: echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+
+    - name: Build and tag Docker image
       run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/myhello:latest .
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }} .
+        docker tag ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }} ${{ secrets.DOCKER_USERNAME }}/myhello:latest
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/myhello:${{ steps.git_commit.outputs.sha }}
         docker push ${{ secrets.DOCKER_USERNAME }}/myhello:latest
-      env:
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
